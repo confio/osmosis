@@ -14,7 +14,7 @@ import (
 // 4) Contains both JoinPool and ExitPool messages in one tx.
 //    - Has some false positives, but they seem relatively contrived.
 // TODO: Move the first component to a future router module
-func IsArbTxLoose(tx sdk.Tx) bool {
+func IsArbTxLoose(ctx sdk.Context, tx sdk.Tx) bool {
 	msgs := tx.GetMsgs()
 
 	swapInDenom := ""
@@ -32,6 +32,7 @@ func IsArbTxLoose(tx sdk.Tx) bool {
 
 		swapMsg, isSwapMsg := m.(gammtypes.SwapMsgRoute)
 		if !isSwapMsg {
+			ctx.Logger().Info("not recognized as swap message")
 			continue
 		}
 

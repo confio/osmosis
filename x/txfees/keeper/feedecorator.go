@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -65,7 +67,8 @@ func (mfd MempoolFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate b
 			}
 		}
 	}
-
+	g := mfd.GetMinBaseGasPriceForTx(ctx, baseDenom, tx)
+	ctx.Logger().Info(fmt.Sprintf("Gas fee: %s, %s", g.String(), mfd.ConfigArbMinGasFee.String()))
 	// If we are in CheckTx, this function is ran locally to determine if these fees are sufficient
 	// to enter our mempool.
 	// So we ensure that the provided fees meet a minimum threshold for the validator,
@@ -111,7 +114,7 @@ func (k Keeper) IsSufficientFee(ctx sdk.Context, minBaseGasPrice sdk.Dec, gasReq
 func (mfd MempoolFeeDecorator) GetMinBaseGasPriceForTx(ctx sdk.Context, baseDenom string, tx sdk.Tx) sdk.Dec {
 	cfgMinGasPrice := ctx.MinGasPrices().AmountOf(baseDenom)
 
-	if txfee_filters.IsArbTxLoose(tx) {
+	if txfee_filters.IsArbTxLoose(ctx, tx) {
 		return sdk.MaxDec(cfgMinGasPrice, mfd.ConfigArbMinGasFee)
 	}
 	return cfgMinGasPrice
