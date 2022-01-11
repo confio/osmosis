@@ -35,7 +35,10 @@ func IsArbTxLoose(ctx sdk.Context, tx sdk.Tx) bool {
 			ctx.Logger().Info("not recognized as swap message")
 			continue
 		}
+		if ctx.
+		ctx.Logger().Info("recognized as swap message")
 
+		ctx.Logger().Info("token in %s, token out %s", swapMsg.TokenInDenom(), swapMsg.TokenOutDenom())
 		// (1) Check that swap denom in != swap denom out
 		if swapMsg.TokenInDenom() == swapMsg.TokenOutDenom() {
 			return true
