@@ -1,6 +1,8 @@
 package txfee_filters
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gammtypes "github.com/osmosis-labs/osmosis/x/gamm/types"
 )
@@ -35,10 +37,9 @@ func IsArbTxLoose(ctx sdk.Context, tx sdk.Tx) bool {
 			ctx.Logger().Info("not recognized as swap message")
 			continue
 		}
-		if ctx.
 		ctx.Logger().Info("recognized as swap message")
 
-		ctx.Logger().Info("token in %s, token out %s", swapMsg.TokenInDenom(), swapMsg.TokenOutDenom())
+		ctx.Logger().Info(fmt.Sprintf("token in %s, token out %s, all=%v", swapMsg.TokenInDenom(), swapMsg.TokenOutDenom(), swapMsg.TokenDenomsOnPath()))
 		// (1) Check that swap denom in != swap denom out
 		if swapMsg.TokenInDenom() == swapMsg.TokenOutDenom() {
 			return true
