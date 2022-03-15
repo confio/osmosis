@@ -7,36 +7,21 @@ import (
 	gammkeeper "github.com/osmosis-labs/osmosis/v7/x/gamm/keeper"
 )
 
-type Keeper struct {
-	//codec       codec.Codec
-	//storeKey    sdk.StoreKey
-	//paramStore  paramtypes.Subspace
+type QueryPlugin struct {
 	gammKeeper *gammkeeper.Keeper
 }
 
-// NewKeeper constructor
-func NewKeeper(
+// NewQueryPlugin constructor
+func NewQueryPlugin(
 	gammK *gammkeeper.Keeper,
-) *Keeper {
-	// set KeyTable if it has not already been set
-	//if !paramSpace.HasKeyTable() {
-	//	paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
-	//}
-	// ensure bonded and not bonded module accounts are set
-	//if addr := ak.GetModuleAddress(types.BondedPoolName); addr == nil {
-	//	panic(fmt.Sprintf("%s module account has not been set", types.BondedPoolName))
-	//}
-
-	return &Keeper{
-		//codec:       marshaler,
-		//storeKey:    key,
-		//paramStore:  paramSpace,
+) *QueryPlugin {
+	return &QueryPlugin{
 		gammKeeper: gammK,
 	}
 }
 
-func (k Keeper) GetPoolState(ctx sdk.Context, poolId uint64) (*types.PoolState, error) {
-	poolData, err := k.gammKeeper.GetPool(ctx, poolId)
+func (qp QueryPlugin) GetPoolState(ctx sdk.Context, poolId uint64) (*types.PoolState, error) {
+	poolData, err := qp.gammKeeper.GetPool(ctx, poolId)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "gamm get pool")
 	}

@@ -5,11 +5,11 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 )
 
-func SetupWasmHandlers(
-	osmoKeeper ViewKeeper,
+func RegisterCustomPlugins(
+	wasmQueryPlugin ViewKeeper,
 ) []wasmkeeper.Option {
 	queryPluginOpt := wasmkeeper.WithQueryPlugins(&wasmkeeper.QueryPlugins{
-		Custom: CustomQuerier(osmoKeeper),
+		Custom: CustomQuerier(wasmQueryPlugin),
 	})
 
 	return []wasm.Option{

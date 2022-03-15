@@ -163,8 +163,6 @@ type appKeepers struct {
 	SuperfluidKeeper     *superfluidkeeper.Keeper
 	GovKeeper            *govkeeper.Keeper
 	WasmKeeper           *wasm.Keeper
-	// Osmosis wasm query interface
-	OwasmKeeper owasm.ViewKeeper
 }
 
 func (app *OsmosisApp) InitSpecialKeepers(
@@ -373,8 +371,8 @@ func (app *OsmosisApp) InitNormalKeepers(
 	// if we want to allow any custom callbacks
 	supportedFeatures := "iterator,staking,stargate"
 
-	app.OwasmKeeper = owasm.NewKeeper(app.GAMMKeeper)
-	wasmOpts = append(owasm.SetupWasmHandlers(app.OwasmKeeper), wasmOpts...)
+	owasmQueryPlugin := owasm.NewQueryPlugin(app.GAMMKeeper)
+	wasmOpts = append(owasm.RegisterCustomPlugins(owasmQueryPlugin), wasmOpts...)
 
 	wasmKeeper := wasm.NewKeeper(
 		appCodec,
