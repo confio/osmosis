@@ -29,15 +29,12 @@ func CustomQuerier(osmoKeeper ViewKeeper) func(ctx sdk.Context, request json.Raw
 				return nil, sdkerrors.Wrap(err, "osmo pool state query")
 			}
 
-			var assets []wasmvmtypes.Coin
-			for _, asset := range state.Assets {
-				assets = append(assets, wasmvmtypes.NewCoin(asset.Amount.Uint64(), asset.Denom))
-
-			}
+			assets := ConvertSdkCoinsToWasmCoins(state.Assets)
+			shares := ConvertSdkCoinToWasmCoin(state.Shares)
 
 			res := wasm.PoolStateResponse{
 				Assets: assets,
-				Shares: wasmvmtypes.NewCoin(state.Shares.Amount.Uint64(), state.Shares.Denom),
+				Shares: shares,
 			}
 			bz, err := json.Marshal(res)
 			if err != nil {
@@ -47,4 +44,19 @@ func CustomQuerier(osmoKeeper ViewKeeper) func(ctx sdk.Context, request json.Raw
 		}
 		return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown osmosis query variant"}
 	}
+}
+
+// ConvertSdkCoinsToWasmCoins converts sdk type coins to wasm vm type coins
+func ConvertSdkCoinsToWasmCoins(coins []sdk.Coin) wasmvmtypes.Coins {
+	var toSend wasmvmtypes.Coins
+	for _, coin := range coins {
+		c := ConvertSdkCoinToWasmCoin(coin)
+		toSend = append(toSend, c)
+	}
+	return toSend
+}
+
+// ConvertSdkCoinToWasmCoin converts a sdk type coin to a wasm vm type coin
+func ConvertSdkCoinToWasmCoin(coin sdk.Coin) wasmvmtypes.Coin {
+	return wasmvmtypes.NewCoin(coin.Amount.Uint64(), coin.Denom)
 }
