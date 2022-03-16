@@ -1,16 +1,32 @@
 package wasm
 
 import (
+	"encoding/json"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/cosmos/cosmos-sdk/simapp"
+	"github.com/osmosis-labs/osmosis/v7/app/wasm"
+	"github.com/osmosis-labs/osmosis/v7/x/gamm/pool-models/balancer"
 	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/osmosis-labs/osmosis/v7/app"
+	bindings "github.com/osmosis-labs/osmosis/v7/app/wasm/bindings"
+	gammtypes "github.com/osmosis-labs/osmosis/v7/x/gamm/types"
+)
+
+// we must pay this many uosmo for every pool we create
+var poolFee int64 = 1000000000
+
+var defaultFunds = sdk.NewCoins(
+	sdk.NewInt64Coin("uatom", 333000000),
+	sdk.NewInt64Coin("uosmo", 555000000+2*poolFee),
+	sdk.NewInt64Coin("ustar", 999000000),
 )
 
 func SetupCustomApp(t *testing.T, addr sdk.AccAddress) (*app.OsmosisApp, sdk.Context) {
@@ -22,11 +38,69 @@ func SetupCustomApp(t *testing.T, addr sdk.AccAddress) (*app.OsmosisApp, sdk.Con
 	cInfo := wasmKeeper.GetCodeInfo(ctx, 1)
 	require.NotNil(t, cInfo)
 
-	// TODO: set up funds in this account
-
-	// TODO: set up some pools (pass as args? hardcode?)
-
 	return osmosis, ctx
+}
+
+func TestQueryPool(t *testing.T) {
+	actor := RandomAccountAddress()
+	osmosis, ctx := SetupCustomApp(t, actor)
+
+	fundAccount(t, ctx, osmosis, actor, defaultFunds)
+
+	poolFunds := []sdk.Coin{
+		sdk.NewInt64Coin("uosmo", 12000000),
+		sdk.NewInt64Coin("ustar", 240000000),
+	}
+	// 20 star to 1 osmo
+	starPool := preparePool(t, ctx, osmosis, actor, poolFunds)
+
+	reflect := instantiateReflectContract(t, ctx, osmosis, actor)
+	require.NotEmpty(t, reflect)
+
+	// query pool state
+	query := bindings.OsmosisQuery{
+		PoolState: &bindings.PoolState{PoolId: starPool},
+	}
+	var resp bindings.PoolStateResponse
+	queryCustom(t, ctx, osmosis, reflect, query, &resp)
+	expected := wasm.ConvertSdkCoinsToWasmCoins(poolFunds)
+	require.EqualValues(t, expected, resp.Assets)
+	// sanity check: check the denom and ensure at least 18 decimal places
+	require.Equal(t, "gamm/pool/1", resp.Shares.Denom)
+	require.Greater(t, len(resp.Shares.Amount), 18)
+}
+
+type ReflectQuery struct {
+	Chain *ChainRequest `json:"chain,omitempty"`
+}
+
+type ChainRequest struct {
+	Request wasmvmtypes.QueryRequest `json:"request"`
+}
+
+type ChainResponse struct {
+	Data []byte `json:"data"`
+}
+
+func queryCustom(t *testing.T, ctx sdk.Context, osmosis *app.OsmosisApp, contract sdk.AccAddress, request bindings.OsmosisQuery, response interface{}) {
+	msgBz, err := json.Marshal(request)
+	require.NoError(t, err)
+
+	query := ReflectQuery{
+		Chain: &ChainRequest{
+			Request: wasmvmtypes.QueryRequest{Custom: msgBz},
+		},
+	}
+	queryBz, err := json.Marshal(query)
+	require.NoError(t, err)
+
+	resBz, err := osmosis.WasmKeeper.QuerySmart(ctx, contract, queryBz)
+	require.NoError(t, err)
+	var resp ChainResponse
+	err = json.Unmarshal(resBz, &resp)
+	require.NoError(t, err)
+	err = json.Unmarshal(resp.Data, response)
+	require.NoError(t, err)
 }
 
 func storeReflectCode(t *testing.T, ctx sdk.Context, osmosis *app.OsmosisApp, addr sdk.AccAddress) {
@@ -34,7 +108,7 @@ func storeReflectCode(t *testing.T, ctx sdk.Context, osmosis *app.OsmosisApp, ad
 	wasmCode, err := ioutil.ReadFile("../testdata/osmo_reflect.wasm")
 	require.NoError(t, err)
 
-	src := types.StoreCodeProposalFixture(func(p *types.StoreCodeProposal) {
+	src := wasmtypes.StoreCodeProposalFixture(func(p *wasmtypes.StoreCodeProposal) {
 		p.RunAs = addr.String()
 		p.WASMByteCode = wasmCode
 	})
@@ -59,10 +133,31 @@ func instantiateReflectContract(t *testing.T, ctx sdk.Context, osmosis *app.Osmo
 	return addr
 }
 
-func TestQueryPool(t *testing.T) {
-	myActorAddress := RandomAccountAddress()
-	osmosis, ctx := SetupCustomApp(t, myActorAddress)
+func fundAccount(t *testing.T, ctx sdk.Context, osmosis *app.OsmosisApp, addr sdk.AccAddress, coins sdk.Coins) {
+	err := simapp.FundAccount(
+		osmosis.BankKeeper,
+		ctx,
+		addr,
+		coins,
+	)
+	require.NoError(t, err)
+}
 
-	reflect := instantiateReflectContract(t, ctx, osmosis, myActorAddress)
-	require.NotEmpty(t, reflect)
+func preparePool(t *testing.T, ctx sdk.Context, osmosis *app.OsmosisApp, addr sdk.AccAddress, funds []sdk.Coin) uint64 {
+	var assets []gammtypes.PoolAsset
+	for _, coin := range funds {
+		assets = append(assets, gammtypes.PoolAsset{
+			Weight: sdk.NewInt(100),
+			Token:  coin,
+		})
+	}
+
+	poolParams := balancer.PoolParams{
+		SwapFee: sdk.NewDec(0),
+		ExitFee: sdk.NewDec(0),
+	}
+
+	poolId, err := osmosis.GAMMKeeper.CreateBalancerPool(ctx, addr, poolParams, assets, "")
+	require.NoError(t, err)
+	return poolId
 }
