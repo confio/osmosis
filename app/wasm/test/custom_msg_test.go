@@ -117,7 +117,9 @@ func TestSwapMsg(t *testing.T) {
 			expectErr: true,
 		},
 
-		//"exact out: simple swap works": {
+		// FIXME: this panics in GAMM module !?! hits a known TODO
+		// https://github.com/osmosis-labs/osmosis/blob/a380ab2fcd39fb94c2b10411e07daf664911257a/osmomath/math.go#L47-L51
+		//"exact out: panics if too much swapped": {
 		//	msg: func(state BaseState) *wasmbindings.SwapMsg {
 		//		return &wasmbindings.SwapMsg{
 		//			First: wasmbindings.Swap{
@@ -129,8 +131,8 @@ func TestSwapMsg(t *testing.T) {
 		//			Route: []wasmbindings.Step{},
 		//			Amount: wasmbindings.SwapAmountWithLimit{
 		//				ExactOut: &wasmbindings.ExactOut{
-		//					MaxInput:     sdk.NewInt(22000000),
-		//					Output: sdk.NewInt(120000000),
+		//					MaxInput: sdk.NewInt(22000000),
+		//					Output:   sdk.NewInt(120000000),
 		//				},
 		//			},
 		//		}
@@ -141,6 +143,32 @@ func TestSwapMsg(t *testing.T) {
 		//		sdk.NewInt64Coin("ustar", 120000000),
 		//	},
 		//},
+
+		"exact out: simple swap works": {
+			msg: func(state BaseState) *wasmbindings.SwapMsg {
+				return &wasmbindings.SwapMsg{
+					First: wasmbindings.Swap{
+						PoolId:   state.AtomPool,
+						DenomIn:  "uosmo",
+						DenomOut: "uatom",
+					},
+					// Note: you must use empty array, not nil, for valid Rust JSON
+					Route: []wasmbindings.Step{},
+					Amount: wasmbindings.SwapAmountWithLimit{
+						ExactOut: &wasmbindings.ExactOut{
+							// 12 OSMO * 6 ATOM == 18 OSMO * 4 ATOM (+6 OSMO, -2 ATOM)
+							MaxInput: sdk.NewInt(7000000),
+							Output:   sdk.NewInt(2000000),
+						},
+					},
+				}
+			},
+			initFunds: sdk.NewInt64Coin("uosmo", 8000000),
+			finalFunds: []sdk.Coin{
+				sdk.NewInt64Coin("uatom", 2000000),
+				sdk.NewInt64Coin("uosmo", 2000000),
+			},
+		},
 	}
 
 	for name, tc := range cases {
