@@ -2,7 +2,7 @@ package wasm
 
 import (
 	"encoding/json"
-	wasm "github.com/osmosis-labs/osmosis/v7/app/wasm/bindings"
+	bindings "github.com/osmosis-labs/osmosis/v7/app/wasm/bindings"
 	"github.com/osmosis-labs/osmosis/v7/app/wasm/types"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
@@ -16,7 +16,7 @@ type ViewKeeper interface {
 
 func CustomQuerier(osmoKeeper ViewKeeper) func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
 	return func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
-		var contractQuery wasm.OsmosisQuery
+		var contractQuery bindings.OsmosisQuery
 		if err := json.Unmarshal(request, &contractQuery); err != nil {
 			return nil, sdkerrors.Wrap(err, "osmosis query")
 		}
@@ -32,7 +32,7 @@ func CustomQuerier(osmoKeeper ViewKeeper) func(ctx sdk.Context, request json.Raw
 			assets := ConvertSdkCoinsToWasmCoins(state.Assets)
 			shares := ConvertSdkCoinToWasmCoin(state.Shares)
 
-			res := wasm.PoolStateResponse{
+			res := bindings.PoolStateResponse{
 				Assets: assets,
 				Shares: shares,
 			}

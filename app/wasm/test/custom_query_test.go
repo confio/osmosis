@@ -16,7 +16,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/osmosis-labs/osmosis/v7/app"
-	bindings "github.com/osmosis-labs/osmosis/v7/app/wasm/bindings"
+	"github.com/osmosis-labs/osmosis/v7/app/wasm/bindings"
 	gammtypes "github.com/osmosis-labs/osmosis/v7/x/gamm/types"
 )
 

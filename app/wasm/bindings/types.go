@@ -1,4 +1,4 @@
-package wasm
+package bindings
 
 import sdk "github.com/cosmos/cosmos-sdk/types"
 
