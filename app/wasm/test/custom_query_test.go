@@ -2,6 +2,7 @@ package wasm
 
 import (
 	"encoding/json"
+	"fmt"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/osmosis-labs/osmosis/v7/app/wasm"
@@ -54,6 +55,13 @@ func TestQueryPool(t *testing.T) {
 	// 20 star to 1 osmo
 	starPool := preparePool(t, ctx, osmosis, actor, poolFunds)
 
+	pool2Funds := []sdk.Coin{
+		sdk.NewInt64Coin("uatom", 6000000),
+		sdk.NewInt64Coin("uosmo", 12000000),
+	}
+	// 20 star to 1 osmo
+	atomPool := preparePool(t, ctx, osmosis, actor, pool2Funds)
+
 	reflect := instantiateReflectContract(t, ctx, osmosis, actor)
 	require.NotEmpty(t, reflect)
 
@@ -61,13 +69,21 @@ func TestQueryPool(t *testing.T) {
 	query := bindings.OsmosisQuery{
 		PoolState: &bindings.PoolState{PoolId: starPool},
 	}
-	var resp bindings.PoolStateResponse
+	resp := bindings.PoolStateResponse{}
 	queryCustom(t, ctx, osmosis, reflect, query, &resp)
 	expected := wasm.ConvertSdkCoinsToWasmCoins(poolFunds)
 	require.EqualValues(t, expected, resp.Assets)
-	// sanity check: check the denom and ensure at least 18 decimal places
-	require.Equal(t, "gamm/pool/1", resp.Shares.Denom)
-	require.Greater(t, len(resp.Shares.Amount), 18)
+	assertValidShares(t, resp.Shares, starPool)
+
+	// query second pool state
+	query = bindings.OsmosisQuery{
+		PoolState: &bindings.PoolState{PoolId: atomPool},
+	}
+	resp = bindings.PoolStateResponse{}
+	queryCustom(t, ctx, osmosis, reflect, query, &resp)
+	expected = wasm.ConvertSdkCoinsToWasmCoins(pool2Funds)
+	require.EqualValues(t, expected, resp.Assets)
+	assertValidShares(t, resp.Shares, atomPool)
 }
 
 type ReflectQuery struct {
@@ -101,6 +117,13 @@ func queryCustom(t *testing.T, ctx sdk.Context, osmosis *app.OsmosisApp, contrac
 	require.NoError(t, err)
 	err = json.Unmarshal(resp.Data, response)
 	require.NoError(t, err)
+}
+
+func assertValidShares(t *testing.T, shares wasmvmtypes.Coin, poolID uint64) {
+	// sanity check: check the denom and ensure at least 18 decimal places
+	denom := fmt.Sprintf("gamm/pool/%d", poolID)
+	require.Equal(t, denom, shares.Denom)
+	require.Greater(t, len(shares.Amount), 18)
 }
 
 func storeReflectCode(t *testing.T, ctx sdk.Context, osmosis *app.OsmosisApp, addr sdk.AccAddress) {
