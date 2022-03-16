@@ -34,3 +34,17 @@ func (qp QueryPlugin) GetPoolState(ctx sdk.Context, poolId uint64) (*types.PoolS
 
 	return &poolState, nil
 }
+
+func (qp QueryPlugin) GetSpotPrice(ctx sdk.Context, poolId uint64, denomIn string, denomOut string, withSwapFee bool) (*sdk.Dec, error) {
+	var spotPrice sdk.Dec
+	var err error
+	if withSwapFee {
+		spotPrice, err = qp.gammKeeper.CalculateSpotPriceWithSwapFee(ctx, poolId, denomIn, denomOut)
+	} else {
+		spotPrice, err = qp.gammKeeper.CalculateSpotPrice(ctx, poolId, denomIn, denomOut)
+	}
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "gamm get spot price")
+	}
+	return &spotPrice, nil
+}

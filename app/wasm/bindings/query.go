@@ -54,7 +54,7 @@ type PoolStateResponse struct {
 
 type SpotPriceResponse struct {
 	/// How many output we would get for 1 input
-	price string `json:"price"`
+	Price string `json:"price"`
 }
 
 type EstimatePriceResponse struct {

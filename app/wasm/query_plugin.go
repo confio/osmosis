@@ -12,6 +12,7 @@ import (
 
 type ViewKeeper interface {
 	GetPoolState(ctx sdk.Context, poolId uint64) (*types.PoolState, error)
+	GetSpotPrice(ctx sdk.Context, poolId uint64, denomIn string, denomOut string, withSwapFee bool) (*sdk.Dec, error)
 }
 
 func CustomQuerier(osmoKeeper ViewKeeper) func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
@@ -39,6 +40,23 @@ func CustomQuerier(osmoKeeper ViewKeeper) func(ctx sdk.Context, request json.Raw
 			bz, err := json.Marshal(res)
 			if err != nil {
 				return nil, sdkerrors.Wrap(err, "osmo pool state query response")
+			}
+			return bz, nil
+		} else if contractQuery.SpotPrice != nil {
+			poolId := contractQuery.SpotPrice.Swap.PoolId
+			denomIn := contractQuery.SpotPrice.Swap.DenomIn
+			denomOut := contractQuery.SpotPrice.Swap.DenomOut
+			withSwapFee := contractQuery.SpotPrice.WithSwapFee
+
+			spotPrice, err := osmoKeeper.GetSpotPrice(ctx, poolId, denomIn, denomOut, withSwapFee)
+			if err != nil {
+				return nil, sdkerrors.Wrap(err, "osmo spot price query")
+			}
+
+			res := wasm.SpotPriceResponse{Price: spotPrice.String()}
+			bz, err := json.Marshal(res)
+			if err != nil {
+				return nil, sdkerrors.Wrap(err, "osmo spot price query response")
 			}
 			return bz, nil
 		}
