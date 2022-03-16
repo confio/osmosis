@@ -7,7 +7,7 @@ if [ $# -ne 1 ]; then
   exit 1
 fi
 
-tag="$1"
+tag="v1.0.0-beta6"
 
 for contract in hackatom reflect; do
   url="https://github.com/CosmWasm/cosmwasm/releases/download/$tag/${contract}.wasm"
@@ -15,9 +15,8 @@ for contract in hackatom reflect; do
   wget -O "${contract}.wasm" "$url"
 done
 
-# TODO: allow better customization
-osmo_tag="v0.2.0"
-url="https://github.com/confio/osmosis-bindings/releases/download/v0.2.0/osmo_reflect.wasm"
+tag="$1"
+url="https://github.com/confio/osmosis-bindings/releases/download/$tag/osmo_reflect.wasm"
 echo "Downloading $url ..."
 wget -O "osmo_reflect.wasm" "$url"
 
