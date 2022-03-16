@@ -29,7 +29,7 @@ func TestSwapMsg(t *testing.T) {
 		initFunds  sdk.Coin
 		finalFunds []sdk.Coin
 	}{
-		"simple swap works": {
+		"exact in: simple swap works": {
 			msg: func(state BaseState) *wasmbindings.SwapMsg {
 				return &wasmbindings.SwapMsg{
 					First: wasmbindings.Swap{
@@ -42,7 +42,7 @@ func TestSwapMsg(t *testing.T) {
 					Amount: wasmbindings.SwapAmountWithLimit{
 						ExactIn: &wasmbindings.ExactIn{
 							Input:     sdk.NewInt(12000000),
-							MinOutput: sdk.NewInt(1000000),
+							MinOutput: sdk.NewInt(5000000),
 						},
 					},
 				}
@@ -53,6 +53,94 @@ func TestSwapMsg(t *testing.T) {
 				sdk.NewInt64Coin("ustar", 120000000),
 			},
 		},
+		"exact in: price too low": {
+			msg: func(state BaseState) *wasmbindings.SwapMsg {
+				return &wasmbindings.SwapMsg{
+					First: wasmbindings.Swap{
+						PoolId:   state.StarPool,
+						DenomIn:  "uosmo",
+						DenomOut: "ustar",
+					},
+					// Note: you must use empty array, not nil, for valid Rust JSON
+					Route: []wasmbindings.Step{},
+					Amount: wasmbindings.SwapAmountWithLimit{
+						ExactIn: &wasmbindings.ExactIn{
+							Input:     sdk.NewInt(12000000),
+							MinOutput: sdk.NewInt(555000000),
+						},
+					},
+				}
+			},
+			initFunds: sdk.NewInt64Coin("uosmo", 13000000),
+			expectErr: true,
+		},
+		"exact in: not enough funds to swap": {
+			msg: func(state BaseState) *wasmbindings.SwapMsg {
+				return &wasmbindings.SwapMsg{
+					First: wasmbindings.Swap{
+						PoolId:   state.StarPool,
+						DenomIn:  "uosmo",
+						DenomOut: "ustar",
+					},
+					// Note: you must use empty array, not nil, for valid Rust JSON
+					Route: []wasmbindings.Step{},
+					Amount: wasmbindings.SwapAmountWithLimit{
+						ExactIn: &wasmbindings.ExactIn{
+							Input:     sdk.NewInt(12000000),
+							MinOutput: sdk.NewInt(5000000),
+						},
+					},
+				}
+			},
+			initFunds: sdk.NewInt64Coin("uosmo", 7000000),
+			expectErr: true,
+		},
+		"exact in: invalidPool": {
+			msg: func(state BaseState) *wasmbindings.SwapMsg {
+				return &wasmbindings.SwapMsg{
+					First: wasmbindings.Swap{
+						PoolId:   state.StarPool,
+						DenomIn:  "uosmo",
+						DenomOut: "uatom",
+					},
+					// Note: you must use empty array, not nil, for valid Rust JSON
+					Route: []wasmbindings.Step{},
+					Amount: wasmbindings.SwapAmountWithLimit{
+						ExactIn: &wasmbindings.ExactIn{
+							Input:     sdk.NewInt(12000000),
+							MinOutput: sdk.NewInt(100000),
+						},
+					},
+				}
+			},
+			initFunds: sdk.NewInt64Coin("uosmo", 13000000),
+			expectErr: true,
+		},
+
+		//"exact out: simple swap works": {
+		//	msg: func(state BaseState) *wasmbindings.SwapMsg {
+		//		return &wasmbindings.SwapMsg{
+		//			First: wasmbindings.Swap{
+		//				PoolId:   state.StarPool,
+		//				DenomIn:  "uosmo",
+		//				DenomOut: "ustar",
+		//			},
+		//			// Note: you must use empty array, not nil, for valid Rust JSON
+		//			Route: []wasmbindings.Step{},
+		//			Amount: wasmbindings.SwapAmountWithLimit{
+		//				ExactOut: &wasmbindings.ExactOut{
+		//					MaxInput:     sdk.NewInt(22000000),
+		//					Output: sdk.NewInt(120000000),
+		//				},
+		//			},
+		//		}
+		//	},
+		//	initFunds: sdk.NewInt64Coin("uosmo", 15000000),
+		//	finalFunds: []sdk.Coin{
+		//		sdk.NewInt64Coin("uosmo", 3000000),
+		//		sdk.NewInt64Coin("ustar", 120000000),
+		//	},
+		//},
 	}
 
 	for name, tc := range cases {
