@@ -1,11 +1,9 @@
 package wasm
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -19,7 +17,7 @@ func SetupCustomApp(t *testing.T, addr sdk.AccAddress) (*app.OsmosisApp, sdk.Con
 	osmosis, ctx := CreateTestInput()
 	wasmKeeper := osmosis.WasmKeeper
 
-	storeReflectCode(t, ctx, osmosis, myActorAddress)
+	storeReflectCode(t, ctx, osmosis, addr)
 
 	cInfo := wasmKeeper.GetCodeInfo(ctx, 1)
 	require.NotNil(t, cInfo)
@@ -55,7 +53,7 @@ func instantiateReflectContract(t *testing.T, ctx sdk.Context, osmosis *app.Osmo
 	initMsgBz := []byte("{}")
 	contractKeeper := keeper.NewDefaultPermissionKeeper(osmosis.WasmKeeper)
 	codeID := uint64(1)
-	addr, _, err = contractKeeper.Instantiate(ctx, codeID, funder, funder, initMsgBz, "demo contract", nil)
+	addr, _, err := contractKeeper.Instantiate(ctx, codeID, funder, funder, initMsgBz, "demo contract", nil)
 	require.NoError(t, err)
 
 	return addr
@@ -63,7 +61,8 @@ func instantiateReflectContract(t *testing.T, ctx sdk.Context, osmosis *app.Osmo
 
 func TestQueryPool(t *testing.T) {
 	myActorAddress := RandomAccountAddress()
-	osmosis, ctx = SetupCustomApp(t, myActorAddress)
+	osmosis, ctx := SetupCustomApp(t, myActorAddress)
 
 	reflect := instantiateReflectContract(t, ctx, osmosis, myActorAddress)
+	require.NotEmpty(t, reflect)
 }
