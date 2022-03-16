@@ -38,7 +38,7 @@ type SpotPrice struct {
 type EstimatePrice struct {
 	First  Swap
 	Route  []Step
-	Amount SwapAmount
+	Amount SwapAmount // FIXME: Use SwapAmountWithLimit
 }
 
 type FullDenomResponse struct {
@@ -60,5 +60,5 @@ type SpotPriceResponse struct {
 type EstimatePriceResponse struct {
 	// If you query with SwapAmount::Input, this is SwapAmount::Output.
 	// If you query with SwapAmount::Output, this is SwapAmount::Input.
-	amount SwapAmount `json:"swap_amount"`
+	Amount SwapAmount `json:"swap_amount"`
 }
