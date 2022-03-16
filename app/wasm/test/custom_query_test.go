@@ -66,20 +66,20 @@ func TestQueryPool(t *testing.T) {
 	require.NotEmpty(t, reflect)
 
 	// query pool state
-	query := bindings.OsmosisQuery{
-		PoolState: &bindings.PoolState{PoolId: starPool},
+	query := wasmbindings.OsmosisQuery{
+		PoolState: &wasmbindings.PoolState{PoolId: starPool},
 	}
-	resp := bindings.PoolStateResponse{}
+	resp := wasmbindings.PoolStateResponse{}
 	queryCustom(t, ctx, osmosis, reflect, query, &resp)
 	expected := wasm.ConvertSdkCoinsToWasmCoins(poolFunds)
 	require.EqualValues(t, expected, resp.Assets)
 	assertValidShares(t, resp.Shares, starPool)
 
 	// query second pool state
-	query = bindings.OsmosisQuery{
-		PoolState: &bindings.PoolState{PoolId: atomPool},
+	query = wasmbindings.OsmosisQuery{
+		PoolState: &wasmbindings.PoolState{PoolId: atomPool},
 	}
-	resp = bindings.PoolStateResponse{}
+	resp = wasmbindings.PoolStateResponse{}
 	queryCustom(t, ctx, osmosis, reflect, query, &resp)
 	expected = wasm.ConvertSdkCoinsToWasmCoins(pool2Funds)
 	require.EqualValues(t, expected, resp.Assets)
@@ -98,7 +98,7 @@ type ChainResponse struct {
 	Data []byte `json:"data"`
 }
 
-func queryCustom(t *testing.T, ctx sdk.Context, osmosis *app.OsmosisApp, contract sdk.AccAddress, request bindings.OsmosisQuery, response interface{}) {
+func queryCustom(t *testing.T, ctx sdk.Context, osmosis *app.OsmosisApp, contract sdk.AccAddress, request wasmbindings.OsmosisQuery, response interface{}) {
 	msgBz, err := json.Marshal(request)
 	require.NoError(t, err)
 

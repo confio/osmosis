@@ -1,4 +1,4 @@
-package bindings
+package wasmbindings
 
 import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
