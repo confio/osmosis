@@ -51,36 +51,12 @@ func CustomQuerier(osmoKeeper *QueryPlugin) func(ctx sdk.Context, request json.R
 			}
 			return bz, nil
 		} else if contractQuery.EstimatePrice != nil {
-			sender := "" // FIXME
-			poolId := contractQuery.EstimatePrice.First.PoolId
-			denomIn := contractQuery.EstimatePrice.First.DenomIn
-			denomOut := contractQuery.EstimatePrice.First.DenomOut
-			var exactIn bool
-			var amount sdk.Int
-			if contractQuery.EstimatePrice.Amount.In != nil {
-				amount = *contractQuery.EstimatePrice.Amount.In
-				exactIn = true
-			} else if contractQuery.EstimatePrice.Amount.Out != nil {
-				amount = *contractQuery.EstimatePrice.Amount.Out
-				exactIn = false
-			} else {
-				return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, "osmo estimate price query: Invalid amount")
-			}
-			route := contractQuery.EstimatePrice.Route
-
-			estimatedAmount, err := osmoKeeper.EstimatePrice(ctx, sender, poolId, denomIn, denomOut, exactIn, amount, route)
+			swapAmount, err := osmoKeeper.EstimatePrice(ctx, contractQuery.EstimatePrice)
 			if err != nil {
 				return nil, sdkerrors.Wrap(err, "osmo estimate price query")
 			}
 
-			var swapAmount bindings.SwapAmount
-			if exactIn {
-				swapAmount.Out = estimatedAmount
-			} else {
-				swapAmount.In = estimatedAmount
-			}
-
-			res := bindings.EstimatePriceResponse{Amount: swapAmount}
+			res := bindings.EstimatePriceResponse{Amount: *swapAmount}
 			bz, err := json.Marshal(res)
 			if err != nil {
 				return nil, sdkerrors.Wrap(err, "osmo estimate price query response")

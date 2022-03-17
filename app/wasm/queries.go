@@ -58,16 +58,22 @@ func (qp QueryPlugin) GetSpotPrice(ctx sdk.Context, spotPrice *bindings.SpotPric
 	return &price, nil
 }
 
-func (qp QueryPlugin) EstimatePrice(ctx sdk.Context, sender string, firstPoolId uint64, denomIn string, denomOut string, exactIn bool, amount sdk.Int, route []bindings.Step) (*sdk.Int, error) {
+func (qp QueryPlugin) EstimatePrice(ctx sdk.Context, estimatePrice *bindings.EstimatePrice) (*bindings.SwapAmount, error) {
+	sender := "" // FIXME: https://github.com/confio/osmosis-bindings/pull/14
+	poolId := estimatePrice.First.PoolId
+	denomIn := estimatePrice.First.DenomIn
+	denomOut := estimatePrice.First.DenomOut
+	route := estimatePrice.Route
+
 	var senderAddress = sdk.AccAddress(sender)
-	var swapAmount sdk.Int
-	var err error
-	if exactIn {
-		tokenIn := sdk.NewCoin(denomIn, amount)
+
+	if estimatePrice.Amount.In != nil {
+		tokenIn := sdk.NewCoin(denomIn, *estimatePrice.Amount.In)
+
 		// Populate route
 		var steps gammtypes.SwapAmountInRoutes
 		firstStep := gammtypes.SwapAmountInRoute{
-			PoolId:        firstPoolId,
+			PoolId:        poolId,
 			TokenOutDenom: denomOut,
 		}
 		steps = append(steps, firstStep)
@@ -78,14 +84,20 @@ func (qp QueryPlugin) EstimatePrice(ctx sdk.Context, sender string, firstPoolId 
 			}
 			steps = append(steps, step)
 		}
+
 		tokenOutMinAmount := sdk.NewInt(1)
-		swapAmount, err = qp.gammKeeper.MultihopSwapExactAmountIn(ctx, senderAddress, steps, tokenIn, tokenOutMinAmount)
-	} else {
-		tokenOut := sdk.NewCoin(denomOut, amount)
+		estimatedAmount, err := qp.gammKeeper.MultihopSwapExactAmountIn(ctx, senderAddress, steps, tokenIn, tokenOutMinAmount)
+		if err != nil {
+			return nil, sdkerrors.Wrap(err, "gamm estimate price exact amount in")
+		}
+		return &bindings.SwapAmount{Out: &estimatedAmount}, nil
+	} else if estimatePrice.Amount.Out != nil {
+		tokenOut := sdk.NewCoin(denomOut, *estimatePrice.Amount.Out)
+
 		// Populate route
 		var steps gammtypes.SwapAmountOutRoutes
 		firstStep := gammtypes.SwapAmountOutRoute{
-			PoolId:       firstPoolId,
+			PoolId:       poolId,
 			TokenInDenom: denomIn,
 		}
 		steps = append(steps, firstStep)
@@ -96,11 +108,13 @@ func (qp QueryPlugin) EstimatePrice(ctx sdk.Context, sender string, firstPoolId 
 			}
 			steps = append(steps, step)
 		}
+
 		tokenInMaxAmount := sdk.NewInt(math.MaxInt64)
-		swapAmount, err = qp.gammKeeper.MultihopSwapExactAmountOut(ctx, senderAddress, steps, tokenInMaxAmount, tokenOut)
+		estimatedAmount, err := qp.gammKeeper.MultihopSwapExactAmountOut(ctx, senderAddress, steps, tokenInMaxAmount, tokenOut)
+		if err != nil {
+			return nil, sdkerrors.Wrap(err, "gamm estimate price exact amount out")
+		}
+		return &bindings.SwapAmount{In: &estimatedAmount}, nil
 	}
-	if err != nil {
-		return nil, sdkerrors.Wrap(err, "gamm estimate price")
-	}
-	return &swapAmount, nil
+	return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, "osmo estimate price query: Invalid amount")
 }
