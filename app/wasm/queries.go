@@ -60,7 +60,7 @@ func (qp QueryPlugin) GetSpotPrice(ctx sdk.Context, spotPrice *bindings.SpotPric
 }
 
 func (qp QueryPlugin) EstimatePrice(ctx sdk.Context, estimatePrice *bindings.EstimatePrice) (*bindings.SwapAmount, error) {
-	sender := "" // FIXME: https://github.com/confio/osmosis-bindings/pull/14
+	sender := estimatePrice.Contract
 	poolId := estimatePrice.First.PoolId
 	denomIn := estimatePrice.First.DenomIn
 	denomOut := estimatePrice.First.DenomOut
