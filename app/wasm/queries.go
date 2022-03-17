@@ -65,6 +65,9 @@ func (qp QueryPlugin) EstimatePrice(ctx sdk.Context, estimatePrice *bindings.Est
 	denomIn := estimatePrice.First.DenomIn
 	denomOut := estimatePrice.First.DenomOut
 	route := estimatePrice.Route
+	if len(route) != 0 {
+		return nil, wasmvmtypes.UnsupportedRequest{Kind: "TODO: multi-hop swap price estimation"}
+	}
 
 	var senderAddress = sdk.AccAddress(sender)
 
@@ -78,13 +81,6 @@ func (qp QueryPlugin) EstimatePrice(ctx sdk.Context, estimatePrice *bindings.Est
 			TokenOutDenom: denomOut,
 		}
 		steps = append(steps, firstStep)
-		for _, step := range route {
-			step := gammtypes.SwapAmountInRoute{
-				PoolId:        step.PoolId,
-				TokenOutDenom: step.DenomOut,
-			}
-			steps = append(steps, step)
-		}
 
 		tokenOutMinAmount := sdk.NewInt(1)
 		estimatedAmount, err := qp.gammKeeper.MultihopSwapExactAmountIn(ctx, senderAddress, steps, tokenIn, tokenOutMinAmount)
@@ -102,13 +98,6 @@ func (qp QueryPlugin) EstimatePrice(ctx sdk.Context, estimatePrice *bindings.Est
 			TokenInDenom: denomIn,
 		}
 		steps = append(steps, firstStep)
-		for _, step := range route {
-			step := gammtypes.SwapAmountOutRoute{
-				PoolId:       step.PoolId,
-				TokenInDenom: step.DenomOut,
-			}
-			steps = append(steps, step)
-		}
 
 		tokenInMaxAmount := sdk.NewInt(math.MaxInt64)
 		estimatedAmount, err := qp.gammKeeper.MultihopSwapExactAmountOut(ctx, senderAddress, steps, tokenInMaxAmount, tokenOut)
