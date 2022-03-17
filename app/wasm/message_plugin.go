@@ -22,7 +22,7 @@ func CustomEncoder(osmoKeeper *QueryPlugin) func(sender sdk.AccAddress, msg json
 		if contractMsg.Swap != nil {
 			return buildSwapMsg(sender, contractMsg.Swap)
 		}
-		return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown osmosis query variant"}
+		return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown osmosis message variant"}
 	}
 }
 
