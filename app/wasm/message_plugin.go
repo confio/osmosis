@@ -75,6 +75,8 @@ func (m *MintTokenMessenger) mintTokens(ctx sdk.Context, contractAddr sdk.AccAdd
 	return nil, nil, nil
 }
 
+// TODO: this is very close to QueryPlugin.EstimatePrice, maybe we can pull out common code into one function
+// that these both use? at least the routes / token In/Out calculation
 func (m *MintTokenMessenger) swapTokens(ctx sdk.Context, contractAddr sdk.AccAddress, swap *wasmbindings.SwapMsg) ([]sdk.Event, [][]byte, error) {
 	if len(swap.Route) != 0 {
 		return nil, nil, wasmvmtypes.UnsupportedRequest{Kind: "TODO: multi-hop swaps"}

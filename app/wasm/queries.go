@@ -59,6 +59,8 @@ func (qp QueryPlugin) GetSpotPrice(ctx sdk.Context, spotPrice *bindings.SpotPric
 	return &price, nil
 }
 
+// TODO: this is very close to MintTokenMessenger.swapTokens, maybe we can pull out common code into one function
+// that these both use? at least the routes / token In/Out calculation
 func (qp QueryPlugin) EstimatePrice(ctx sdk.Context, estimatePrice *bindings.EstimatePrice) (*bindings.SwapAmount, error) {
 	sender := estimatePrice.Contract
 	poolId := estimatePrice.First.PoolId
