@@ -10,7 +10,7 @@ type Swap struct {
 
 type Step struct {
 	PoolId   uint64 `json:"pool_id"`
-	DenomOut string `json:"denom_out"` // FIXME: Rename to Step.Denom or Step.DenomInOrOut for clarity
+	DenomOut string `json:"denom_out"`
 }
 
 type SwapAmount struct {

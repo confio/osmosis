@@ -36,9 +36,9 @@ type SpotPrice struct {
 }
 
 type EstimatePrice struct {
-	First  Swap
-	Route  []Step
-	Amount SwapAmount // FIXME: Use SwapAmountWithLimit
+	First  Swap       `json:"first"`
+	Route  []Step     `json:"route"`
+	Amount SwapAmount `json:"amount"`
 }
 
 type FullDenomResponse struct {
