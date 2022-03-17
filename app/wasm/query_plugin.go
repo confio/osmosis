@@ -9,16 +9,9 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
 	bindings "github.com/osmosis-labs/osmosis/v7/app/wasm/bindings"
-	"github.com/osmosis-labs/osmosis/v7/app/wasm/types"
 )
 
-type ViewKeeper interface {
-	GetPoolState(ctx sdk.Context, poolId uint64) (*types.PoolState, error)
-	GetSpotPrice(ctx sdk.Context, poolId uint64, denomIn string, denomOut string, withSwapFee bool) (*sdk.Dec, error)
-	EstimatePrice(ctx sdk.Context, sender string, firstPoolId uint64, denomIn string, denomOut string, exactIn bool, amount sdk.Int, route []bindings.Step) (*sdk.Int, error)
-}
-
-func CustomQuerier(osmoKeeper ViewKeeper) func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
+func CustomQuerier(osmoKeeper *QueryPlugin) func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
 	return func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
 		var contractQuery bindings.OsmosisQuery
 		if err := json.Unmarshal(request, &contractQuery); err != nil {
