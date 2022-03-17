@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	wasm "github.com/osmosis-labs/osmosis/v7/app/wasm/bindings"
+	bindings "github.com/osmosis-labs/osmosis/v7/app/wasm/bindings"
 	"github.com/osmosis-labs/osmosis/v7/app/wasm/types"
 	gammkeeper "github.com/osmosis-labs/osmosis/v7/x/gamm/keeper"
 	gammtypes "github.com/osmosis-labs/osmosis/v7/x/gamm/types"
@@ -40,21 +40,25 @@ func (qp QueryPlugin) GetPoolState(ctx sdk.Context, poolId uint64) (*types.PoolS
 	return &poolState, nil
 }
 
-func (qp QueryPlugin) GetSpotPrice(ctx sdk.Context, poolId uint64, denomIn string, denomOut string, withSwapFee bool) (*sdk.Dec, error) {
-	var spotPrice sdk.Dec
+func (qp QueryPlugin) GetSpotPrice(ctx sdk.Context, spotPrice *bindings.SpotPrice) (*sdk.Dec, error) {
+	poolId := spotPrice.Swap.PoolId
+	denomIn := spotPrice.Swap.DenomIn
+	denomOut := spotPrice.Swap.DenomOut
+	withSwapFee := spotPrice.WithSwapFee
+	var price sdk.Dec
 	var err error
 	if withSwapFee {
-		spotPrice, err = qp.gammKeeper.CalculateSpotPriceWithSwapFee(ctx, poolId, denomIn, denomOut)
+		price, err = qp.gammKeeper.CalculateSpotPriceWithSwapFee(ctx, poolId, denomIn, denomOut)
 	} else {
-		spotPrice, err = qp.gammKeeper.CalculateSpotPrice(ctx, poolId, denomIn, denomOut)
+		price, err = qp.gammKeeper.CalculateSpotPrice(ctx, poolId, denomIn, denomOut)
 	}
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "gamm get spot price")
 	}
-	return &spotPrice, nil
+	return &price, nil
 }
 
-func (qp QueryPlugin) EstimatePrice(ctx sdk.Context, sender string, firstPoolId uint64, denomIn string, denomOut string, exactIn bool, amount sdk.Int, route []wasm.Step) (*sdk.Int, error) {
+func (qp QueryPlugin) EstimatePrice(ctx sdk.Context, sender string, firstPoolId uint64, denomIn string, denomOut string, exactIn bool, amount sdk.Int, route []bindings.Step) (*sdk.Int, error) {
 	var senderAddress = sdk.AccAddress(sender)
 	var swapAmount sdk.Int
 	var err error

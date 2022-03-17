@@ -39,12 +39,7 @@ func CustomQuerier(osmoKeeper *QueryPlugin) func(ctx sdk.Context, request json.R
 			}
 			return bz, nil
 		} else if contractQuery.SpotPrice != nil {
-			poolId := contractQuery.SpotPrice.Swap.PoolId
-			denomIn := contractQuery.SpotPrice.Swap.DenomIn
-			denomOut := contractQuery.SpotPrice.Swap.DenomOut
-			withSwapFee := contractQuery.SpotPrice.WithSwapFee
-
-			spotPrice, err := osmoKeeper.GetSpotPrice(ctx, poolId, denomIn, denomOut, withSwapFee)
+			spotPrice, err := osmoKeeper.GetSpotPrice(ctx, contractQuery.SpotPrice)
 			if err != nil {
 				return nil, sdkerrors.Wrap(err, "osmo spot price query")
 			}
