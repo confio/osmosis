@@ -1,6 +1,7 @@
 package wasm
 
 import (
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -116,5 +117,5 @@ func (qp QueryPlugin) EstimatePrice(ctx sdk.Context, estimatePrice *bindings.Est
 		}
 		return &bindings.SwapAmount{In: &estimatedAmount}, nil
 	}
-	return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, "osmo estimate price query: Invalid amount")
+	return nil, wasmvmtypes.UnsupportedRequest{Kind: "must support either EstimatePrice.Amount.In or EstimatePrice.Amount.Out"}
 }
