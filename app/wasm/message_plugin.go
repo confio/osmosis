@@ -35,7 +35,7 @@ var _ wasmkeeper.Messenger = (*MintTokenMessenger)(nil)
 
 func (m *MintTokenMessenger) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) ([]sdk.Event, [][]byte, error) {
 	if msg.Custom != nil {
-		// only handle the happy path where this is really minting...
+		// only handle the happy path where this is really minting / swapping ...
 		// leave everything else for the wrapped version
 		var contractMsg wasmbindings.OsmosisMsg
 		if err := json.Unmarshal(msg.Custom, &contractMsg); err != nil {
