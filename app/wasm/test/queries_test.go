@@ -283,7 +283,7 @@ func TestEstimatePrice(t *testing.T) {
 		expCost       *wasmbindings.SwapAmount
 		expErr        bool
 	}{
-		"valid estimate price exact in": {
+		"valid estimate price (exact in)": {
 			estimatePrice: &wasmbindings.EstimatePrice{
 				Contract: actor.String(),
 				First: wasmbindings.Swap{
@@ -297,6 +297,113 @@ func TestEstimatePrice(t *testing.T) {
 				},
 			},
 			expCost: &starSwapAmount,
+		},
+		"non-existent pool id": {
+			estimatePrice: &wasmbindings.EstimatePrice{
+				Contract: actor.String(),
+				First: wasmbindings.Swap{
+					PoolId:   starPool + 3,
+					DenomIn:  "uosmo",
+					DenomOut: "ustar",
+				},
+				Route: nil,
+				Amount: wasmbindings.SwapAmount{
+					In: &amountIn,
+				},
+			},
+			expErr: true,
+		},
+		"zero pool id": {
+			estimatePrice: &wasmbindings.EstimatePrice{
+				Contract: actor.String(),
+				First: wasmbindings.Swap{
+					PoolId:   0,
+					DenomIn:  "uosmo",
+					DenomOut: "ustar",
+				},
+				Route: nil,
+				Amount: wasmbindings.SwapAmount{
+					In: &amountIn,
+				},
+			},
+			expErr: true,
+		},
+		"invalid denom in": {
+			estimatePrice: &wasmbindings.EstimatePrice{
+				Contract: actor.String(),
+				First: wasmbindings.Swap{
+					PoolId:   starPool,
+					DenomIn:  "invalid",
+					DenomOut: "ustar",
+				},
+				Route: nil,
+				Amount: wasmbindings.SwapAmount{
+					In: &amountIn,
+				},
+			},
+			expErr: true,
+		},
+		"empty denom in": {
+			estimatePrice: &wasmbindings.EstimatePrice{
+				Contract: actor.String(),
+				First: wasmbindings.Swap{
+					PoolId:   starPool,
+					DenomIn:  "",
+					DenomOut: "ustar",
+				},
+				Route: nil,
+				Amount: wasmbindings.SwapAmount{
+					In: &amountIn,
+				},
+			},
+			expErr: true,
+		},
+		"invalid denom out": {
+			estimatePrice: &wasmbindings.EstimatePrice{
+				Contract: actor.String(),
+				First: wasmbindings.Swap{
+					PoolId:   starPool,
+					DenomIn:  "ustar",
+					DenomOut: "invalid",
+				},
+				Route: nil,
+				Amount: wasmbindings.SwapAmount{
+					In: &amountIn,
+				},
+			},
+			expErr: true,
+		},
+		"empty denom out": {
+			estimatePrice: &wasmbindings.EstimatePrice{
+				Contract: actor.String(),
+				First: wasmbindings.Swap{
+					PoolId:   starPool,
+					DenomIn:  "ustar",
+					DenomOut: "",
+				},
+				Route: nil,
+				Amount: wasmbindings.SwapAmount{
+					In: &amountIn,
+				},
+			},
+			expErr: true,
+		},
+		"null estimate price": {
+			estimatePrice: nil,
+			expErr:        true,
+		},
+		"empty swap amount": {
+			estimatePrice: &wasmbindings.EstimatePrice{
+				Contract: actor.String(),
+				First: wasmbindings.Swap{
+					PoolId:   starPool,
+					DenomIn:  "uosmo",
+					DenomOut: "ustar",
+				},
+				Route:  nil,
+				Amount: wasmbindings.SwapAmount{},
+			},
+			expErr: true,
 		},
 	}
 	for name, spec := range specs {
