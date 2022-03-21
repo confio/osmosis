@@ -106,17 +106,21 @@ func performSwap(keeper *gammkeeper.Keeper, ctx sdk.Context, contractAddr sdk.Ac
 		}
 		return &wasmbindings.SwapAmount{Out: &estimatedAmount}, nil
 	} else if swap.Amount.ExactOut != nil {
-		// TODO
-		if len(swap.Route) != 0 {
-			return nil, wasmvmtypes.UnsupportedRequest{Kind: "TODO: multi-hop swaps"}
-		}
 		routes := []gammtypes.SwapAmountOutRoute{{
 			PoolId:       swap.First.PoolId,
 			TokenInDenom: swap.First.DenomIn,
 		}}
+		output := swap.First.DenomOut
+		for _, step := range swap.Route {
+			routes = append(routes, gammtypes.SwapAmountOutRoute{
+				PoolId:       step.PoolId,
+				TokenInDenom: output,
+			})
+			output = step.DenomOut
+		}
 		tokenInMaxAmount := swap.Amount.ExactOut.MaxInput
 		tokenOut := sdk.Coin{
-			Denom:  swap.First.DenomOut,
+			Denom:  output,
 			Amount: swap.Amount.ExactOut.Output,
 		}
 		estimatedAmount, err := keeper.MultihopSwapExactAmountOut(ctx, contractAddr, routes, tokenInMaxAmount, tokenOut)
