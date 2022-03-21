@@ -2,6 +2,8 @@ package wasm
 
 import (
 	"fmt"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/osmosis-labs/osmosis/v7/app/wasm/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
 
@@ -53,5 +55,59 @@ func TestFullDenom(t *testing.T) {
 			assert.Equal(t, spec.expFullDenom, gotFullDenom, "exp %s but got %s", spec.expFullDenom, gotFullDenom)
 		})
 	}
+}
 
+func TestPoolState(t *testing.T) {
+	actor := RandomAccountAddress()
+	osmosis, ctx := SetupCustomApp(t, actor)
+
+	fundAccount(t, ctx, osmosis, actor, defaultFunds)
+
+	poolFunds := []sdk.Coin{
+		sdk.NewInt64Coin("uosmo", 12000000),
+		sdk.NewInt64Coin("ustar", 240000000),
+	}
+	// 20 star to 1 osmo
+	starPool := preparePool(t, ctx, osmosis, actor, poolFunds)
+
+	// FIXME: Derive / obtain these values
+	starSharesDenom := fmt.Sprintf("gamm/pool/%d", starPool)
+	starSharedAmount, _ := sdk.NewIntFromString("100_000_000_000_000_000_000")
+
+	queryPlugin := wasm.NewQueryPlugin(osmosis.GAMMKeeper)
+
+	specs := map[string]struct {
+		poolId       uint64
+		expPoolState *types.PoolState
+		expErr       bool
+	}{
+		"existent pool id ": {
+			poolId: starPool,
+			expPoolState: &types.PoolState{
+				Assets: poolFunds,
+				Shares: sdk.NewCoin(starSharesDenom, starSharedAmount),
+			},
+		},
+		"non-existent pool id ": {
+			poolId: starPool + 1,
+			expErr: true,
+		},
+		"zero pool id ": {
+			poolId: 0,
+			expErr: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			// when
+			gotPoolState, gotErr := queryPlugin.GetPoolState(ctx, spec.poolId)
+			// then
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			assert.Equal(t, spec.expPoolState, gotPoolState, "exp %s but got %s", spec.expPoolState, gotPoolState)
+		})
+	}
 }
