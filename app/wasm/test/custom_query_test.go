@@ -190,8 +190,7 @@ func TestQueryEstimatePrice(t *testing.T) {
 	reflect := instantiateReflectContract(t, ctx, osmosis, actor)
 	require.NotEmpty(t, reflect)
 
-	// FIXME: The contract needs to have funds for estimating the price...
-	// Plus, a "query" shouldn't be changing state / generating transactions...
+	// The contract/sender needs to have funds for estimating the price
 	fundAccount(t, ctx, osmosis, reflect, defaultFunds)
 
 	// Estimate swap rate
