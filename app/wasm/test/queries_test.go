@@ -127,7 +127,11 @@ func TestSpotPrice(t *testing.T) {
 	}
 	// 20 star to 1 osmo
 	starPool := preparePool(t, ctx, osmosis, actor, poolFunds)
-	starPrice := sdk.MustNewDecFromStr(fmt.Sprintf("%f", 12000000./240000000))
+
+	uosmo := poolFunds[0].Amount.ToDec().MustFloat64()
+	ustar := poolFunds[1].Amount.ToDec().MustFloat64()
+
+	starPrice := sdk.MustNewDecFromStr(fmt.Sprintf("%f", uosmo/ustar))
 	starFee := sdk.MustNewDecFromStr(fmt.Sprintf("%f", swapFee))
 	starPriceWithFee := starPrice.Add(starFee)
 
@@ -244,4 +248,69 @@ func TestSpotPrice(t *testing.T) {
 			assert.InEpsilonf(t, spec.expPrice.MustFloat64(), gotPrice.MustFloat64(), epsilon, "exp %s but got %s", spec.expPrice.String(), gotPrice.String())
 		})
 	}
+}
+
+func TestEstimatePrice(t *testing.T) {
+	actor := RandomAccountAddress()
+	osmosis, ctx := SetupCustomApp(t, actor)
+	epsilon := 1e-3
+
+	fundAccount(t, ctx, osmosis, actor, defaultFunds)
+
+	poolFunds := []sdk.Coin{
+		sdk.NewInt64Coin("uosmo", 12000000),
+		sdk.NewInt64Coin("ustar", 240000000),
+	}
+	// 20 star to 1 osmo
+	starPool := preparePool(t, ctx, osmosis, actor, poolFunds)
+
+	// Estimate swap rate
+	uosmo := poolFunds[0].Amount.ToDec().MustFloat64()
+	ustar := poolFunds[1].Amount.ToDec().MustFloat64()
+	swapRate := ustar / uosmo
+
+	amountIn := sdk.NewInt(10000)
+
+	amount := amountIn.ToDec().MustFloat64()
+	starAmount := sdk.NewInt(int64(amount * swapRate))
+
+	starSwapAmount := wasmbindings.SwapAmount{Out: &starAmount}
+
+	queryPlugin := wasm.NewQueryPlugin(osmosis.GAMMKeeper)
+
+	specs := map[string]struct {
+		estimatePrice *wasmbindings.EstimatePrice
+		expCost       *wasmbindings.SwapAmount
+		expErr        bool
+	}{
+		"valid estimate price exact in": {
+			estimatePrice: &wasmbindings.EstimatePrice{
+				Contract: actor.String(),
+				First: wasmbindings.Swap{
+					PoolId:   starPool,
+					DenomIn:  "uosmo",
+					DenomOut: "ustar",
+				},
+				Route: nil,
+				Amount: wasmbindings.SwapAmount{
+					In: &amountIn,
+				},
+			},
+			expCost: &starSwapAmount,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			// when
+			gotCost, gotErr := queryPlugin.EstimatePrice(ctx, spec.estimatePrice)
+			// then
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			assert.InEpsilonf(t, (*spec.expCost.Out).ToDec().MustFloat64(), (*gotCost.Out).ToDec().MustFloat64(), epsilon, "exp %s but got %s", spec.expCost.Out.String(), gotCost.Out.String())
+		})
+	}
+
 }

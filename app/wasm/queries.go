@@ -56,6 +56,15 @@ func (qp QueryPlugin) GetSpotPrice(ctx sdk.Context, spotPrice *wasmbindings.Spot
 }
 
 func (qp QueryPlugin) EstimatePrice(ctx sdk.Context, estimatePrice *wasmbindings.EstimatePrice) (*wasmbindings.SwapAmount, error) {
+	if estimatePrice == nil {
+		return nil, wasmvmtypes.InvalidRequest{Err: "gamm estimate price null"}
+	}
+	if err := sdk.ValidateDenom(estimatePrice.First.denomIn); err != nil {
+		return nil, sdkerrors.Wrap(err, "gamm estimate price denom in")
+	}
+	if err := sdk.ValidateDenom(estimatePrice.First.denomOut); err != nil {
+		return nil, sdkerrors.Wrap(err, "gamm estimate price denom out")
+	}
 	contractAddr, err := sdk.AccAddressFromBech32(estimatePrice.Contract)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "gamm estimate price sender address")
