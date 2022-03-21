@@ -176,7 +176,7 @@ func TestQuerySpotPrice(t *testing.T) {
 func TestQueryEstimatePrice(t *testing.T) {
 	actor := RandomAccountAddress()
 	osmosis, ctx := SetupCustomApp(t, actor)
-	epsilon := 1. // high epsilon (because of rounding?)
+	epsilon := 1e-3
 
 	fundAccount(t, ctx, osmosis, actor, defaultFunds)
 
@@ -201,7 +201,7 @@ func TestQueryEstimatePrice(t *testing.T) {
 	swapRate := ustar / uosmo
 
 	// Query estimate cost (Exact in. No route)
-	amountIn := sdk.NewInt(1)
+	amountIn := sdk.NewInt(10000)
 	query := wasmbindings.OsmosisQuery{
 		EstimatePrice: &wasmbindings.EstimatePrice{
 			Contract: reflect.String(),
@@ -230,14 +230,14 @@ func TestQueryEstimatePrice(t *testing.T) {
 
 	// And the other way around
 	// Query estimate cost (Exact out. No route)
-	amountOut := sdk.NewInt(1)
+	amountOut := sdk.NewInt(10000)
 	query = wasmbindings.OsmosisQuery{
 		EstimatePrice: &wasmbindings.EstimatePrice{
 			Contract: reflect.String(),
 			First: wasmbindings.Swap{
 				PoolId:   starPool,
-				DenomIn:  "ustar",
-				DenomOut: "uosmo",
+				DenomIn:  "uosmo",
+				DenomOut: "ustar",
 			},
 			Route: []wasmbindings.Step{},
 			Amount: wasmbindings.SwapAmount{
@@ -252,14 +252,9 @@ func TestQueryEstimatePrice(t *testing.T) {
 	cost, err = (*resp.Amount.In).ToDec().Float64()
 	require.NoError(t, err)
 
-	uosmo, err = poolFunds[0].Amount.ToDec().Float64()
-	require.NoError(t, err)
-	ustar, err = poolFunds[1].Amount.ToDec().Float64()
-	require.NoError(t, err)
-
 	amount, err = amountOut.ToDec().Float64()
 	require.NoError(t, err)
-	expected = amount * swapRate
+	expected = amount * 1. / swapRate
 	require.InEpsilonf(t, expected, cost, epsilon, fmt.Sprintf("Outside of tolerance (%f)", epsilon))
 }
 
