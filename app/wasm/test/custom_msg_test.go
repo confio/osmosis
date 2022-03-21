@@ -209,6 +209,70 @@ func TestSwapMsg(t *testing.T) {
 				sdk.NewInt64Coin("uosmo", 2000000),
 			},
 		},
+
+		// TODO: exact out
+		"exact in: 2 step multi-hop": {
+			msg: func(state BaseState) *wasmbindings.SwapMsg {
+				return &wasmbindings.SwapMsg{
+					First: wasmbindings.Swap{
+						PoolId:   state.StarPool,
+						DenomIn:  "ustar",
+						DenomOut: "uosmo",
+					},
+					// Note: you must use empty array, not nil, for valid Rust JSON
+					Route: []wasmbindings.Step{{
+						PoolId:   state.AtomPool,
+						DenomOut: "uatom",
+					}},
+					Amount: wasmbindings.SwapAmountWithLimit{
+						ExactIn: &wasmbindings.ExactIn{
+							Input:     sdk.NewInt(240000000),
+							MinOutput: sdk.NewInt(1999000),
+						},
+					},
+				}
+			},
+			initFunds: sdk.NewInt64Coin("ustar", 240000000),
+			finalFunds: []sdk.Coin{
+				// 240 STAR -> 6 OSMO
+				// 6 OSMO -> 2 ATOM
+				sdk.NewInt64Coin("uatom", 2000000),
+			},
+		},
+
+		// TODO: exact out
+		"exact in: 3 step multi-hop": {
+			msg: func(state BaseState) *wasmbindings.SwapMsg {
+				return &wasmbindings.SwapMsg{
+					First: wasmbindings.Swap{
+						PoolId:   state.StarPool,
+						DenomIn:  "ustar",
+						DenomOut: "uosmo",
+					},
+					// Note: you must use empty array, not nil, for valid Rust JSON
+					Route: []wasmbindings.Step{{
+						PoolId:   state.AtomPool,
+						DenomOut: "uatom",
+					}, {
+						PoolId:   state.RegenPool,
+						DenomOut: "uregen",
+					}},
+					Amount: wasmbindings.SwapAmountWithLimit{
+						ExactIn: &wasmbindings.ExactIn{
+							Input:     sdk.NewInt(240000000),
+							MinOutput: sdk.NewInt(23900000),
+						},
+					},
+				}
+			},
+			initFunds: sdk.NewInt64Coin("ustar", 240000000),
+			finalFunds: []sdk.Coin{
+				// 240 STAR -> 6 OSMO
+				// 6 OSMO -> 2 ATOM
+				// 2 ATOM -> 24 REGEN
+				sdk.NewInt64Coin("uregen", 24000000),
+			},
+		},
 	}
 
 	for name, tc := range cases {
@@ -262,9 +326,9 @@ func prepareSwapState(t *testing.T, ctx sdk.Context, osmosis *app.OsmosisApp) Ba
 	}
 	atomPool := preparePool(t, ctx, osmosis, actor, funds2)
 
-	// 8 regen to 1 osmo
+	// 16 regen to 1 atom
 	funds3 := []sdk.Coin{
-		sdk.NewInt64Coin("uosmo", 12000000),
+		sdk.NewInt64Coin("uatom", 6000000),
 		sdk.NewInt64Coin("uregen", 96000000),
 	}
 	regenPool := preparePool(t, ctx, osmosis, actor, funds3)
