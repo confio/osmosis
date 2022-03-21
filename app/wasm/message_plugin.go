@@ -84,14 +84,17 @@ func (m *MintTokenMessenger) swapTokens(ctx sdk.Context, contractAddr sdk.AccAdd
 
 // This can be used both for the real swap as well as with EstimatePrice query
 func performSwap(keeper *gammkeeper.Keeper, ctx sdk.Context, contractAddr sdk.AccAddress, swap *wasmbindings.SwapMsg) (*wasmbindings.SwapAmount, error) {
-	if len(swap.Route) != 0 {
-		return nil, wasmvmtypes.UnsupportedRequest{Kind: "TODO: multi-hop swaps"}
-	}
 	if swap.Amount.ExactIn != nil {
 		routes := []gammtypes.SwapAmountInRoute{{
 			PoolId:        swap.First.PoolId,
 			TokenOutDenom: swap.First.DenomOut,
 		}}
+		for _, step := range swap.Route {
+			routes = append(routes, gammtypes.SwapAmountInRoute{
+				PoolId:        step.PoolId,
+				TokenOutDenom: step.DenomOut,
+			})
+		}
 		tokenIn := sdk.Coin{
 			Denom:  swap.First.DenomIn,
 			Amount: swap.Amount.ExactIn.Input,
@@ -103,6 +106,10 @@ func performSwap(keeper *gammkeeper.Keeper, ctx sdk.Context, contractAddr sdk.Ac
 		}
 		return &wasmbindings.SwapAmount{Out: &estimatedAmount}, nil
 	} else if swap.Amount.ExactOut != nil {
+		// TODO
+		if len(swap.Route) != 0 {
+			return nil, wasmvmtypes.UnsupportedRequest{Kind: "TODO: multi-hop swaps"}
+		}
 		routes := []gammtypes.SwapAmountOutRoute{{
 			PoolId:       swap.First.PoolId,
 			TokenInDenom: swap.First.DenomIn,

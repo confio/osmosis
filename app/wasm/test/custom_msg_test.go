@@ -240,8 +240,36 @@ func TestSwapMsg(t *testing.T) {
 				sdk.NewInt64Coin("uatom", 1999999),
 			},
 		},
+		"exact out: 2 step multi-hop": {
+			msg: func(state BaseState) *wasmbindings.SwapMsg {
+				return &wasmbindings.SwapMsg{
+					First: wasmbindings.Swap{
+						PoolId:   state.StarPool,
+						DenomIn:  "ustar",
+						DenomOut: "uosmo",
+					},
+					// Note: you must use empty array, not nil, for valid Rust JSON
+					Route: []wasmbindings.Step{{
+						PoolId:   state.AtomPool,
+						DenomOut: "uatom",
+					}},
+					Amount: wasmbindings.SwapAmountWithLimit{
+						ExactOut: &wasmbindings.ExactOut{
+							MaxInput:     sdk.NewInt(240005000),
+							Output: sdk.NewInt(2000000),
+						},
+					},
+				}
+			},
+			initFunds: sdk.NewInt64Coin("ustar", 240005000),
+			finalFunds: []sdk.Coin{
+				// 240 STAR -> 6 OSMO
+				// 6 OSMO -> 2 ATOM (with minor rounding)
+				sdk.NewInt64Coin("uatom", 2000000),
+				sdk.NewInt64Coin("ustar", 5000),
+			},
+		},
 
-		// TODO: exact out
 		"exact in: 3 step multi-hop": {
 			msg: func(state BaseState) *wasmbindings.SwapMsg {
 				return &wasmbindings.SwapMsg{
@@ -272,6 +300,40 @@ func TestSwapMsg(t *testing.T) {
 				// 6 OSMO -> 2 ATOM
 				// 2 ATOM -> 24 REGEN (with minor rounding)
 				sdk.NewInt64Coin("uregen", 23999990),
+			},
+		},
+
+		"exact out: 3 step multi-hop": {
+			msg: func(state BaseState) *wasmbindings.SwapMsg {
+				return &wasmbindings.SwapMsg{
+					First: wasmbindings.Swap{
+						PoolId:   state.StarPool,
+						DenomIn:  "ustar",
+						DenomOut: "uosmo",
+					},
+					// Note: you must use empty array, not nil, for valid Rust JSON
+					Route: []wasmbindings.Step{{
+						PoolId:   state.AtomPool,
+						DenomOut: "uatom",
+					}, {
+						PoolId:   state.RegenPool,
+						DenomOut: "uregen",
+					}},
+					Amount: wasmbindings.SwapAmountWithLimit{
+						ExactOut: &wasmbindings.ExactOut{
+							MaxInput:     sdk.NewInt(240050000),
+							Output: sdk.NewInt(24000000),
+						},
+					},
+				}
+			},
+			initFunds: sdk.NewInt64Coin("ustar", 240050000),
+			finalFunds: []sdk.Coin{
+				// 240 STAR -> 6 OSMO
+				// 6 OSMO -> 2 ATOM
+				// 2 ATOM -> 24 REGEN (with minor rounding)
+				sdk.NewInt64Coin("uregen", 24000000),
+				sdk.NewInt64Coin("ustar", 50000),
 			},
 		},
 	}
