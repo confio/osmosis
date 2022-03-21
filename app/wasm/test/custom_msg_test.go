@@ -210,7 +210,6 @@ func TestSwapMsg(t *testing.T) {
 			},
 		},
 
-		// TODO: exact out
 		"exact in: 2 step multi-hop": {
 			msg: func(state BaseState) *wasmbindings.SwapMsg {
 				return &wasmbindings.SwapMsg{

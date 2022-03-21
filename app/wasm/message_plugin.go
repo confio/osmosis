@@ -75,8 +75,6 @@ func (m *MintTokenMessenger) mintTokens(ctx sdk.Context, contractAddr sdk.AccAdd
 	return nil, nil, nil
 }
 
-// TODO: this is very close to QueryPlugin.EstimatePrice, maybe we can pull out common code into one function
-// that these both use? at least the routes / token In/Out calculation
 func (m *MintTokenMessenger) swapTokens(ctx sdk.Context, contractAddr sdk.AccAddress, swap *wasmbindings.SwapMsg) ([]sdk.Event, [][]byte, error) {
 	_, err := performSwap(m.gammKeeper, ctx, contractAddr, swap)
 	return nil, nil, sdkerrors.Wrap(err, "gamm estimate price exact amount out")
