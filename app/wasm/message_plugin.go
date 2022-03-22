@@ -83,8 +83,11 @@ func (m *CustomMessenger) swapTokens(ctx sdk.Context, contractAddr sdk.AccAddres
 	return nil, nil, nil
 }
 
-// This can be used both for the real swap as well as with EstimatePrice query
+// PerformSwap can be used both for the real swap, and the EstimatePrice query
 func PerformSwap(keeper *gammkeeper.Keeper, ctx sdk.Context, contractAddr sdk.AccAddress, swap *wasmbindings.SwapMsg) (*wasmbindings.SwapAmount, error) {
+	if swap == nil {
+		return nil, wasmvmtypes.InvalidRequest{Err: "gamm perform swap null swap"}
+	}
 	if swap.Amount.ExactIn != nil {
 		routes := []gammtypes.SwapAmountInRoute{{
 			PoolId:        swap.First.PoolId,
