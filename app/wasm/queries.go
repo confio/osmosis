@@ -38,6 +38,9 @@ func (qp QueryPlugin) GetPoolState(ctx sdk.Context, poolId uint64) (*types.PoolS
 }
 
 func (qp QueryPlugin) GetSpotPrice(ctx sdk.Context, spotPrice *wasmbindings.SpotPrice) (*sdk.Dec, error) {
+	if spotPrice == nil {
+		return nil, wasmvmtypes.InvalidRequest{Err: "gamm spot price null"}
+	}
 	poolId := spotPrice.Swap.PoolId
 	denomIn := spotPrice.Swap.DenomIn
 	denomOut := spotPrice.Swap.DenomOut
