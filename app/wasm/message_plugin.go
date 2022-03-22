@@ -148,7 +148,6 @@ func GetFullDenom(contract string, subDenom string) (string, error) {
 	if err != nil {
 		return "", sdkerrors.Wrap(err, "validate sub-denom")
 	}
-	// TODO: Confirm "cw" prefix
 	fullDenom := fmt.Sprintf("cw/%s/%s", contract, subDenom)
 
 	return fullDenom, nil
