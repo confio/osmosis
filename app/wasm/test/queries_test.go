@@ -270,6 +270,8 @@ func TestEstimatePrice(t *testing.T) {
 	swapRate := ustar / uosmo
 
 	amountIn := sdk.NewInt(10000)
+	zeroAmount := sdk.ZeroInt()
+	negativeAmount := amountIn.Neg()
 
 	amount := amountIn.ToDec().MustFloat64()
 	starAmount := sdk.NewInt(int64(amount * swapRate))
@@ -402,6 +404,66 @@ func TestEstimatePrice(t *testing.T) {
 				},
 				Route:  nil,
 				Amount: wasmbindings.SwapAmount{},
+			},
+			expErr: true,
+		},
+		"zero amount in": {
+			estimatePrice: &wasmbindings.EstimatePrice{
+				Contract: actor.String(),
+				First: wasmbindings.Swap{
+					PoolId:   starPool,
+					DenomIn:  "uosmo",
+					DenomOut: "ustar",
+				},
+				Route: nil,
+				Amount: wasmbindings.SwapAmount{
+					In: &zeroAmount,
+				},
+			},
+			expErr: true,
+		},
+		"zero amount out": {
+			estimatePrice: &wasmbindings.EstimatePrice{
+				Contract: actor.String(),
+				First: wasmbindings.Swap{
+					PoolId:   starPool,
+					DenomIn:  "uosmo",
+					DenomOut: "ustar",
+				},
+				Route: nil,
+				Amount: wasmbindings.SwapAmount{
+					Out: &zeroAmount,
+				},
+			},
+			expErr: true,
+		},
+		"negative amount in": {
+			estimatePrice: &wasmbindings.EstimatePrice{
+				Contract: actor.String(),
+				First: wasmbindings.Swap{
+					PoolId:   starPool,
+					DenomIn:  "uosmo",
+					DenomOut: "ustar",
+				},
+				Route: nil,
+				Amount: wasmbindings.SwapAmount{
+					In: &negativeAmount,
+				},
+			},
+			expErr: true,
+		},
+		"negative amount out": {
+			estimatePrice: &wasmbindings.EstimatePrice{
+				Contract: actor.String(),
+				First: wasmbindings.Swap{
+					PoolId:   starPool,
+					DenomIn:  "uosmo",
+					DenomOut: "ustar",
+				},
+				Route: nil,
+				Amount: wasmbindings.SwapAmount{
+					Out: &negativeAmount,
+				},
 			},
 			expErr: true,
 		},
