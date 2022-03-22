@@ -61,6 +61,9 @@ func (m *CustomMessenger) mintTokens(ctx sdk.Context, contractAddr sdk.AccAddres
 }
 
 func PerformMint(b *bankkeeper.BaseKeeper, ctx sdk.Context, contractAddr sdk.AccAddress, mint *wasmbindings.MintTokens) error {
+	if mint == nil {
+		return wasmvmtypes.InvalidRequest{Err: "mint token null mint"}
+	}
 	rcpt, err := parseAddress(mint.Recipient)
 	if err != nil {
 		return err
@@ -69,6 +72,9 @@ func PerformMint(b *bankkeeper.BaseKeeper, ctx sdk.Context, contractAddr sdk.Acc
 	denom, err := GetFullDenom(contractAddr.String(), mint.SubDenom)
 	if err != nil {
 		return sdkerrors.Wrap(err, "mint token denom")
+	}
+	if mint.Amount.IsNegative() {
+		return wasmvmtypes.InvalidRequest{Err: "mint token negative amount"}
 	}
 	coins := []sdk.Coin{sdk.NewCoin(denom, mint.Amount)}
 
