@@ -18,7 +18,7 @@ import (
 
 func CustomMessageDecorator(gammKeeper *gammkeeper.Keeper, bank *bankkeeper.BaseKeeper) func(wasmkeeper.Messenger) wasmkeeper.Messenger {
 	return func(old wasmkeeper.Messenger) wasmkeeper.Messenger {
-		return &MintTokenMessenger{
+		return &CustomMessenger{
 			wrapped:    old,
 			bank:       bank,
 			gammKeeper: gammKeeper,
@@ -26,15 +26,15 @@ func CustomMessageDecorator(gammKeeper *gammkeeper.Keeper, bank *bankkeeper.Base
 	}
 }
 
-type MintTokenMessenger struct {
+type CustomMessenger struct {
 	wrapped    wasmkeeper.Messenger
 	bank       *bankkeeper.BaseKeeper
 	gammKeeper *gammkeeper.Keeper
 }
 
-var _ wasmkeeper.Messenger = (*MintTokenMessenger)(nil)
+var _ wasmkeeper.Messenger = (*CustomMessenger)(nil)
 
-func (m *MintTokenMessenger) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) ([]sdk.Event, [][]byte, error) {
+func (m *CustomMessenger) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) ([]sdk.Event, [][]byte, error) {
 	if msg.Custom != nil {
 		// only handle the happy path where this is really minting / swapping ...
 		// leave everything else for the wrapped version
@@ -52,7 +52,7 @@ func (m *MintTokenMessenger) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAd
 	return m.wrapped.DispatchMsg(ctx, contractAddr, contractIBCPortID, msg)
 }
 
-func (m *MintTokenMessenger) mintTokens(ctx sdk.Context, contractAddr sdk.AccAddress, mint *wasmbindings.MintTokens) ([]sdk.Event, [][]byte, error) {
+func (m *CustomMessenger) mintTokens(ctx sdk.Context, contractAddr sdk.AccAddress, mint *wasmbindings.MintTokens) ([]sdk.Event, [][]byte, error) {
 	rcpt, err := parseAddress(mint.Recipient)
 	if err != nil {
 		return nil, nil, err
@@ -75,7 +75,7 @@ func (m *MintTokenMessenger) mintTokens(ctx sdk.Context, contractAddr sdk.AccAdd
 	return nil, nil, nil
 }
 
-func (m *MintTokenMessenger) swapTokens(ctx sdk.Context, contractAddr sdk.AccAddress, swap *wasmbindings.SwapMsg) ([]sdk.Event, [][]byte, error) {
+func (m *CustomMessenger) swapTokens(ctx sdk.Context, contractAddr sdk.AccAddress, swap *wasmbindings.SwapMsg) ([]sdk.Event, [][]byte, error) {
 	_, err := performSwap(m.gammKeeper, ctx, contractAddr, swap)
 	if err != nil {
 		return nil, nil, sdkerrors.Wrap(err, "perform swap")
