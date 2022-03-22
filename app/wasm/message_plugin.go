@@ -76,7 +76,7 @@ func (m *CustomMessenger) mintTokens(ctx sdk.Context, contractAddr sdk.AccAddres
 }
 
 func (m *CustomMessenger) swapTokens(ctx sdk.Context, contractAddr sdk.AccAddress, swap *wasmbindings.SwapMsg) ([]sdk.Event, [][]byte, error) {
-	_, err := performSwap(m.gammKeeper, ctx, contractAddr, swap)
+	_, err := PerformSwap(m.gammKeeper, ctx, contractAddr, swap)
 	if err != nil {
 		return nil, nil, sdkerrors.Wrap(err, "perform swap")
 	}
@@ -84,7 +84,7 @@ func (m *CustomMessenger) swapTokens(ctx sdk.Context, contractAddr sdk.AccAddres
 }
 
 // This can be used both for the real swap as well as with EstimatePrice query
-func performSwap(keeper *gammkeeper.Keeper, ctx sdk.Context, contractAddr sdk.AccAddress, swap *wasmbindings.SwapMsg) (*wasmbindings.SwapAmount, error) {
+func PerformSwap(keeper *gammkeeper.Keeper, ctx sdk.Context, contractAddr sdk.AccAddress, swap *wasmbindings.SwapMsg) (*wasmbindings.SwapAmount, error) {
 	if swap.Amount.ExactIn != nil {
 		routes := []gammtypes.SwapAmountInRoute{{
 			PoolId:        swap.First.PoolId,
