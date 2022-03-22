@@ -72,13 +72,15 @@ func (m *MintTokenMessenger) mintTokens(ctx sdk.Context, contractAddr sdk.AccAdd
 	if err != nil {
 		return nil, nil, sdkerrors.Wrap(err, "sending newly minted coins from message")
 	}
-
 	return nil, nil, nil
 }
 
 func (m *MintTokenMessenger) swapTokens(ctx sdk.Context, contractAddr sdk.AccAddress, swap *wasmbindings.SwapMsg) ([]sdk.Event, [][]byte, error) {
 	_, err := performSwap(m.gammKeeper, ctx, contractAddr, swap)
-	return nil, nil, sdkerrors.Wrap(err, "gamm estimate price exact amount out")
+	if err != nil {
+		return nil, nil, sdkerrors.Wrap(err, "perform swap")
+	}
+	return nil, nil, nil
 }
 
 // This can be used both for the real swap as well as with EstimatePrice query
