@@ -218,7 +218,6 @@ func TestSwapMsg(t *testing.T) {
 						DenomIn:  "ustar",
 						DenomOut: "uosmo",
 					},
-					// Note: you must use empty array, not nil, for valid Rust JSON
 					Route: []wasmbindings.Step{{
 						PoolId:   state.AtomPool,
 						DenomOut: "uatom",
@@ -246,7 +245,6 @@ func TestSwapMsg(t *testing.T) {
 						DenomIn:  "uosmo",
 						DenomOut: "uatom",
 					},
-					// Note: you must use empty array, not nil, for valid Rust JSON
 					Route: []wasmbindings.Step{{
 						PoolId:   state.RegenPool,
 						DenomOut: "uregen",
@@ -278,7 +276,6 @@ func TestSwapMsg(t *testing.T) {
 		// 				DenomIn:  "ustar",
 		// 				DenomOut: "uosmo",
 		// 			},
-		// 			// Note: you must use empty array, not nil, for valid Rust JSON
 		// 			Route: []wasmbindings.Step{{
 		// 				PoolId:   state.AtomPool,
 		// 				DenomOut: "uatom",
@@ -308,7 +305,6 @@ func TestSwapMsg(t *testing.T) {
 						DenomIn:  "ustar",
 						DenomOut: "uosmo",
 					},
-					// Note: you must use empty array, not nil, for valid Rust JSON
 					Route: []wasmbindings.Step{{
 						PoolId:   state.AtomPool,
 						DenomOut: "uatom",
@@ -341,7 +337,6 @@ func TestSwapMsg(t *testing.T) {
 						DenomIn:  "ustar",
 						DenomOut: "uosmo",
 					},
-					// Note: you must use empty array, not nil, for valid Rust JSON
 					Route: []wasmbindings.Step{{
 						PoolId:   state.AtomPool,
 						DenomOut: "uatom",
