@@ -365,22 +365,9 @@ func TestSwapMultiHop(t *testing.T) {
 	swapRate1 := ustar / uosmo
 
 	amountIn := wasmbindings.ExactIn{
-		Input:     sdk.NewInt(240_000_000),
-		MinOutput: sdk.NewInt(1_999_000),
+		Input:     sdk.NewInt(1_000_000),
+		MinOutput: sdk.NewInt(24_500),
 	}
-	zeroAmountIn := amountIn
-	zeroAmountIn.Input = sdk.ZeroInt()
-	negativeAmountIn := amountIn
-	negativeAmountIn.Input = negativeAmountIn.Input.Neg()
-
-	amountOut := wasmbindings.ExactOut{
-		MaxInput: sdk.NewInt(math.MaxInt64),
-		Output:   sdk.NewInt(10000),
-	}
-	zeroAmountOut := amountOut
-	zeroAmountOut.Output = sdk.ZeroInt()
-	negativeAmountOut := amountOut
-	negativeAmountOut.Output = negativeAmountOut.Output.Neg()
 
 	// Estimate 2nd swap rate
 	uatom2 := poolFunds2[0].Amount.ToDec().MustFloat64()
@@ -388,8 +375,8 @@ func TestSwapMultiHop(t *testing.T) {
 	swapRate2 := uosmo2 / uatom2
 
 	amount := amountIn.Input.ToDec().MustFloat64()
-	// 240 STAR / 20 STAR/OSMO / 2 OSMO/ATOM = 6 ATOM
-	atomAmount := sdk.NewInt(int64(amount / swapRate1 / swapRate2))
+	slippage := 0.992 // FIXME: Derive this value from the amountts
+	atomAmount := sdk.NewInt(int64(amount / swapRate1 / swapRate2 * slippage))
 
 	atomSwapAmount := wasmbindings.SwapAmount{Out: &atomAmount}
 
