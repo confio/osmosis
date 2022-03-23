@@ -360,7 +360,7 @@ func TestSwapMultiHop(t *testing.T) {
 
 	amountIn := wasmbindings.ExactIn{
 		Input:     sdk.NewInt(1_000_000),
-		MinOutput: sdk.NewInt(24_500),
+		MinOutput: sdk.NewInt(20_000),
 	}
 
 	// Multi-hop
@@ -450,6 +450,23 @@ func TestSwapMultiHop(t *testing.T) {
 			},
 			expErr: true,
 		},
+		"self-swap not allowed": {
+			swap: &wasmbindings.SwapMsg{
+				First: wasmbindings.Swap{
+					PoolId:   starPool,
+					DenomIn:  "ustar",
+					DenomOut: "uosmo",
+				},
+				Route: []wasmbindings.Step{{
+					PoolId:   atomPool,
+					DenomOut: "uosmo", // this is same as the input (output of first swap)
+				}},
+				Amount: wasmbindings.SwapAmountWithLimit{
+					ExactIn: &amountIn,
+				},
+			},
+			expErr: true,
+		},
 		"invalid step denom out": {
 			swap: &wasmbindings.SwapMsg{
 				First: wasmbindings.Swap{
@@ -487,8 +504,10 @@ func TestSwapMultiHop(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
+			// use scratch context to avoid interference between tests
+			subCtx, _ := ctx.CacheContext()
 			// when
-			gotAmount, gotErr := wasm.PerformSwap(osmosis.GAMMKeeper, ctx, actor, spec.swap)
+			gotAmount, gotErr := wasm.PerformSwap(osmosis.GAMMKeeper, subCtx, actor, spec.swap)
 			// then
 			if spec.expErr {
 				require.Error(t, gotErr)
