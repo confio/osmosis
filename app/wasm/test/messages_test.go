@@ -375,7 +375,7 @@ func TestSwapMultiHop(t *testing.T) {
 	swapRate2 := uosmo2 / uatom2
 
 	amount := amountIn.Input.ToDec().MustFloat64()
-	slippage := 0.992 // FIXME: Derive this value from the amountts
+	slippage := 0.992 // FIXME: Derive this value from the pools and traded amounts
 	atomAmount := sdk.NewInt(int64(amount / swapRate1 / swapRate2 * slippage))
 
 	atomSwapAmount := wasmbindings.SwapAmount{Out: &atomAmount}
@@ -403,18 +403,88 @@ func TestSwapMultiHop(t *testing.T) {
 			expCost: &atomSwapAmount,
 		},
 		"non-existent step pool id": {
+			swap: &wasmbindings.SwapMsg{
+				First: wasmbindings.Swap{
+					PoolId:   starPool,
+					DenomIn:  "ustar",
+					DenomOut: "uosmo",
+				},
+				Route: []wasmbindings.Step{{
+					PoolId:   atomPool + 2,
+					DenomOut: "uatom",
+				}},
+				Amount: wasmbindings.SwapAmountWithLimit{
+					ExactIn: &amountIn,
+				},
+			},
 			expErr: true,
 		},
 		"zero step pool id": {
+			swap: &wasmbindings.SwapMsg{
+				First: wasmbindings.Swap{
+					PoolId:   starPool,
+					DenomIn:  "ustar",
+					DenomOut: "uosmo",
+				},
+				Route: []wasmbindings.Step{{
+					PoolId:   0,
+					DenomOut: "uatom",
+				}},
+				Amount: wasmbindings.SwapAmountWithLimit{
+					ExactIn: &amountIn,
+				},
+			},
+			expErr: true,
+		},
+		"wrong step denom out": {
+			swap: &wasmbindings.SwapMsg{
+				First: wasmbindings.Swap{
+					PoolId:   starPool,
+					DenomIn:  "ustar",
+					DenomOut: "uosmo",
+				},
+				Route: []wasmbindings.Step{{
+					PoolId:   atomPool,
+					DenomOut: "ATOM",
+				}},
+				Amount: wasmbindings.SwapAmountWithLimit{
+					ExactIn: &amountIn,
+				},
+			},
 			expErr: true,
 		},
 		"invalid step denom out": {
+			swap: &wasmbindings.SwapMsg{
+				First: wasmbindings.Swap{
+					PoolId:   starPool,
+					DenomIn:  "ustar",
+					DenomOut: "uosmo",
+				},
+				Route: []wasmbindings.Step{{
+					PoolId:   atomPool,
+					DenomOut: "invalid",
+				}},
+				Amount: wasmbindings.SwapAmountWithLimit{
+					ExactIn: &amountIn,
+				},
+			},
 			expErr: true,
 		},
 		"empty step denom out": {
-			expErr: true,
-		},
-		"null route": {
+			swap: &wasmbindings.SwapMsg{
+				First: wasmbindings.Swap{
+					PoolId:   starPool,
+					DenomIn:  "ustar",
+					DenomOut: "uosmo",
+				},
+				Route: []wasmbindings.Step{{
+					PoolId:   atomPool,
+					DenomOut: "",
+				}},
+				Amount: wasmbindings.SwapAmountWithLimit{
+					ExactIn: &amountIn,
+				},
+			},
 			expErr: true,
 		},
 	}
