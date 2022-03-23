@@ -358,26 +358,23 @@ func TestSwapMultiHop(t *testing.T) {
 	}
 	atomPool := preparePool(t, ctx, osmosis, actor, poolFunds2)
 
-	// Multi-hop
-	// Estimate 1st swap rate
-	uosmo := poolFunds[0].Amount.ToDec().MustFloat64()
-	ustar := poolFunds[1].Amount.ToDec().MustFloat64()
-	swapRate1 := ustar / uosmo
-
 	amountIn := wasmbindings.ExactIn{
 		Input:     sdk.NewInt(1_000_000),
 		MinOutput: sdk.NewInt(24_500),
 	}
 
+	// Multi-hop
+	// Estimate 1st swap rate
+	uosmo := poolFunds[0].Amount.ToDec().MustFloat64()
+	ustar := poolFunds[1].Amount.ToDec().MustFloat64()
+	expectedOut1 := uosmo - uosmo*ustar/(ustar+amountIn.Input.ToDec().MustFloat64())
+
 	// Estimate 2nd swap rate
 	uatom2 := poolFunds2[0].Amount.ToDec().MustFloat64()
 	uosmo2 := poolFunds2[1].Amount.ToDec().MustFloat64()
-	swapRate2 := uosmo2 / uatom2
+	expectedOut2 := uatom2 - uosmo2*uatom2/(uosmo2+expectedOut1)
 
-	amount := amountIn.Input.ToDec().MustFloat64()
-	slippage := 0.992 // FIXME: Derive this value from the pools and traded amounts
-	atomAmount := sdk.NewInt(int64(amount / swapRate1 / swapRate2 * slippage))
-
+	atomAmount := sdk.NewInt(int64(expectedOut2))
 	atomSwapAmount := wasmbindings.SwapAmount{Out: &atomAmount}
 
 	specs := map[string]struct {
