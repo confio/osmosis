@@ -66,7 +66,7 @@ type SpotPriceResponse struct {
 	Price string `json:"price"`
 }
 
-type EstimatePriceResponse struct {
+type SwapResponse struct {
 	// If you query with SwapAmount::Input, this is SwapAmount::Output.
 	// If you query with SwapAmount::Output, this is SwapAmount::Input.
 	Amount SwapAmount `json:"swap_amount"`

@@ -215,7 +215,7 @@ func TestQueryEstimateSwap(t *testing.T) {
 			},
 		},
 	}
-	resp := wasmbindings.EstimatePriceResponse{}
+	resp := wasmbindings.SwapResponse{}
 	queryCustom(t, ctx, osmosis, reflect, query, &resp)
 	require.NotNil(t, resp.Amount.Out)
 	require.Nil(t, resp.Amount.In)
@@ -244,7 +244,7 @@ func TestQueryEstimateSwap(t *testing.T) {
 			},
 		},
 	}
-	resp = wasmbindings.EstimatePriceResponse{}
+	resp = wasmbindings.SwapResponse{}
 	queryCustom(t, ctx, osmosis, reflect, query, &resp)
 	require.NotNil(t, resp.Amount.In)
 	require.Nil(t, resp.Amount.Out)

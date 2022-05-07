@@ -74,7 +74,7 @@ func CustomQuerier(osmoKeeper *QueryPlugin) func(ctx sdk.Context, request json.R
 				return nil, sdkerrors.Wrap(err, "osmo estimate swap query")
 			}
 
-			res := bindings.EstimatePriceResponse{Amount: *swapAmount}
+			res := bindings.SwapResponse{Amount: *swapAmount}
 			bz, err := json.Marshal(res)
 			if err != nil {
 				return nil, sdkerrors.Wrap(err, "osmo estimate swap query response")
